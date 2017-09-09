@@ -10,10 +10,6 @@ import asyncio
 import MySQLdb
 import functools
 
-
-match_code = '9051203990002'
-
-
 #--------------- Relay class ---------------
 
 class Relay:
@@ -32,12 +28,12 @@ class Relay:
 #--------------- Barscanner class ---------------
 
 class Barscanner:
-    def __init__(self, device_name, match_handle):
+    def __init__(self, device_name, code_ready_handle=None):
         self.device = evdev.InputDevice(device_name)
         self.read_code = ""
-        self.match_handle = match_handle
+        self.code_ready_handle = code_ready_handle
 
-    # Scancode: ASCIICode
+    #Scancode: ASCIICode
     SCANCODES = {0: None, 1: u'ESC', 2: u'1', 3: u'2', 4: u'3', 5: u'4', 6: u'5', 7: u'6', 8: u'7', 9: u'8', 10: u'9',
                  11: u'0', 12: u'-', 13: u'=', 14: u'BKSP', 15: u'TAB', 16: u'Q', 17: u'W', 18: u'E', 19: u'R', 20: u'T',
                  21: u'Y', 22: u'U', 23: u'I', 24: u'O', 25: u'P', 26: u'[', 27: u']', 28: u'CRLF', 29: u'LCTRL', 30: u'A',
@@ -49,12 +45,11 @@ class Barscanner:
     def map_code(self, data):
         return u'{}'.format(Barscanner.SCANCODES.get(data.scancode)) or u'UNKNOWN:[{}]'.format(data.scancode)
 
-
     #Get exclusive access to serial device
     def grab(self):
         self.device.grab()
-    
-    #Barscanner async coroutine
+        
+    #Barscanner async read code coroutine
     async def read_code_coroutine(self):
         read_code = ''
         async for event in self.device.async_read_loop():
@@ -63,17 +58,14 @@ class Barscanner:
                 if data.keystate == 1:  # Down events only                    
                     key_lookup = self.map_code(data)
 
-                    if data.scancode != 28:
+                    if data.scancode != 28: #Building code
                         self.read_code += key_lookup
-                    else:
+                    else: #Code ready
                         print("Read code: ", self.read_code)
-                        if self.read_code == match_code:
-                            print("Code match success")
-                            self.match_handle()
-                        else:
-                            print("Code match failed")
+                        self.code_ready_handle(self.read_code)
                         self.read_code = ''
 
+                        
 #--------------- Relay TCP Server Protocol class ---------------                            
 
 class RelayServerProtocol(asyncio.Protocol):
@@ -98,16 +90,42 @@ class RelayServerProtocol(asyncio.Protocol):
         print('Close the client socket')
         self.transport.close()
 
+#--------------- Program Misc functions ---------------
+
+#FIXME: Change to consider payment date
+
+def is_valid_access(db, affiliate_id):
+    cursor = db.cursor()
+    sql = "select firstName,lastname,rank \
+    from afiliado where (id='%d')" % (int(affiliate_id))
+    try:
+        cursor.execute(sql)
+        db.commit()
+    except:
+        db.rollback()
+
+    data = cursor.fetchone()
+    print(data)
+    return data != None
 
 
-def barscanner_handle(relay, direction):
+def barscanner_handle(read_code, relay, direction, database):
     if direction == "in":
-        print("Entering")
-        relay.send_pulse(50)
+        if is_valid_access(database, read_code):
+            print("Entering")
+            relay.send_pulse(50)
+        else:
+            print("Invalid code")
     if direction == "out":
-        print("Exiting")
-        relay.send_pulse(50)
+        if is_valid_access(database, read_code):
+            print("Exiting")
+            relay.send_pulse(50)
+        else:
+            print("Invalid code")
 
+
+        
+#--------------- Main Program ---------------
         
 def main():    
     #Constants definition
@@ -118,17 +136,22 @@ def main():
     #Setup relay
     relay = Relay(RELAY_PIN)
 
-    barscanner0_match_cb = functools.partial(barscanner_handle, relay, "in")
-    barscanner1_match_cb = functools.partial(barscanner_handle, relay, "out")
-    
-    #Setup barscanners
-    barscanner0 = Barscanner('/dev/barscanner0', barscanner0_match_cb)
-    barscanner1 = Barscanner('/dev/barscanner1', barscanner1_match_cb)
+    #Setup database
+    db = MySQLdb.connect("localhost", "root", "", "fecoteme")
 
+    #Set barscanners code ready callbacks
+    barscanner0_cb = functools.partial(barscanner_handle,
+                                       relay=relay, direction="in", database=db)
+    barscanner1_cb = functools.partial(barscanner_handle,
+                                       relay=relay, direction="out", database=db)
+    #Setup barscanners
+    barscanner0 = Barscanner('/dev/barscanner0', barscanner0_cb)
+    barscanner1 = Barscanner('/dev/barscanner1', barscanner1_cb)
+    
     #Get exclusive access to barscanners
     barscanner0.grab()
     barscanner1.grab()
-
+    
     #Setup main event loop
     loop = asyncio.get_event_loop()
 
