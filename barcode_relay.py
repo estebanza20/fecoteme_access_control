@@ -59,7 +59,7 @@ class Barscanner:
         async for event in self.device.async_read_loop():
             if event.type == evdev.ecodes.EV_KEY:
                 data = evdev.categorize(event)
-                if data.keystate == 1:  # Down events only                    
+                if data.keystate == 1:  # Down events only
                     key_lookup = self.map_code(data)
 
                     if data.scancode != 28: #Building code
@@ -67,8 +67,7 @@ class Barscanner:
                     else: #Code ready
                         self.code_ready_handle(self.read_code)
                         self.read_code = ''
-
-                        
+    
 #--------------- Relay TCP Server Protocol class ---------------                            
 
 class RelayServerProtocol(asyncio.Protocol):
@@ -158,8 +157,7 @@ def barscanner_handle(read_code, relay, direction, database):
             relay.send_pulse(50)
         else:
             print("Invalid access")
-
-
+            
         
 #--------------- Main Program ---------------
         
@@ -187,13 +185,20 @@ def main():
     #Get exclusive access to barscanners
     barscanner0.grab()
     barscanner1.grab()
-    
+        
     #Setup main event loop
     loop = asyncio.get_event_loop()
 
+    async def handle_exception(coroutine):
+        try:
+            await coroutine()
+        except OSError:
+            print("OSError Exception: Barcode scanner failed")
+            exit(1)
+            
     #Setup barscanners async handle tasks
     for barscanner in barscanner0, barscanner1:
-        asyncio.ensure_future(barscanner.read_code_coroutine())
+        asyncio.ensure_future(handle_exception(barscanner.read_code_coroutine))
 
     #Setup server    
     bound_protocol = functools.partial(RelayServerProtocol, relay)
@@ -205,8 +210,7 @@ def main():
         loop.run_forever()
     except KeyboardInterrupt:
         loop.close()
-    
-
+        
 if __name__ == "__main__":
     main()
     
