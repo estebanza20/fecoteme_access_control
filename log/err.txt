@@ -1,0 +1,10 @@
+Jan 10 04:17:15 ez_rpi barcode_relay2_async.py[415]: OSError: [Errno 99] Cannot assign requested address
+Jan 10 04:17:15 ez_rpi barcode_relay2_async.py[415]: During handling of the above exception, another exception occurred:
+Jan 10 04:17:15 ez_rpi barcode_relay2_async.py[415]: Traceback (most recent call last):
+Jan 10 04:17:15 ez_rpi barcode_relay2_async.py[415]: File "/usr/lib/python3.5/asyncio/tasks.py", line 239, in _step
+Jan 10 04:17:15 ez_rpi barcode_relay2_async.py[415]: result = coro.send(None)
+Jan 10 04:17:15 ez_rpi barcode_relay2_async.py[415]: File "/usr/lib/python3.5/asyncio/streams.py", line 113, in start_server
+Jan 10 04:17:15 ez_rpi barcode_relay2_async.py[415]: return (yield from loop.create_server(factory, host, port, **kwds))
+Jan 10 04:17:15 ez_rpi barcode_relay2_async.py[415]: File "/usr/lib/python3.5/asyncio/base_events.py", line 1046, in create_server
+Jan 10 04:17:15 ez_rpi barcode_relay2_async.py[415]: % (sa, err.strerror.lower()))
+Jan 10 04:17:15 ez_rpi barcode_relay2_async.py[415]: OSError: [Errno 99] error while attempting to bind on address ('192.168.2.49', 8888): cannot assign requested address
