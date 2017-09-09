@@ -10,6 +10,10 @@ import asyncio
 import MySQLdb
 import functools
 
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
+
+
 #--------------- Relay class ---------------
 
 class Relay:
@@ -61,7 +65,6 @@ class Barscanner:
                     if data.scancode != 28: #Building code
                         self.read_code += key_lookup
                     else: #Code ready
-                        print("Read code: ", self.read_code)
                         self.code_ready_handle(self.read_code)
                         self.read_code = ''
 
@@ -92,21 +95,54 @@ class RelayServerProtocol(asyncio.Protocol):
 
 #--------------- Program Misc functions ---------------
 
-#FIXME: Change to consider payment date
+#FIXME: Change to consider quick pass special dates
 
 def is_valid_access(db, affiliate_id):
+    is_valid = False
+
     cursor = db.cursor()
-    sql = "select firstName,lastname,rank \
+    sql = "select firstName,lastName,subscriptionDate \
     from afiliado where (id='%d')" % (int(affiliate_id))
     try:
         cursor.execute(sql)
         db.commit()
     except:
         db.rollback()
-
+        
     data = cursor.fetchone()
-    print(data)
-    return data != None
+    print(60 * "-")
+    print("Affiliate ID:", affiliate_id)
+    
+    if data is not None:
+        name = " ".join(data[0:2])
+        subscription_date = data[2]
+
+        print("Name:", name)
+        
+        if subscription_date is not None:
+            last_valid_access_date = subscription_date + relativedelta(days=+30)
+            today = date.today()
+            is_valid = (today <= last_valid_access_date)
+
+            print("Subscription Date:",subscription_date)
+            print("Last Valid Access Date:",last_valid_access_date)
+            print("Days from Last Subscription Update:",(today-subscription_date).days)
+
+            if is_valid == False:
+                print("")
+                print("Invalid access: Affiliate subscription has caducated.")
+                print("Less or equal than 30 days from last subscription update")
+                print("is required for access")
+        else:
+            print("")
+            print("Invalid access: Affiliate has never been subscribed")
+    else:
+        print("")
+        print("Invalid access: Affiliate does not exist")
+
+    print(60 * "-")
+        
+    return is_valid
 
 
 def barscanner_handle(read_code, relay, direction, database):
@@ -115,13 +151,13 @@ def barscanner_handle(read_code, relay, direction, database):
             print("Entering")
             relay.send_pulse(50)
         else:
-            print("Invalid code")
+            print("Invalid access")
     if direction == "out":
         if is_valid_access(database, read_code):
             print("Exiting")
             relay.send_pulse(50)
         else:
-            print("Invalid code")
+            print("Invalid access")
 
 
         
