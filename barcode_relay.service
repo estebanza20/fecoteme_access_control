@@ -1,0 +1,12 @@
+[Unit]
+Description=Sends a relay pulse when barcode number is correct
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=3
+ExecStart=/home/pi/Documents/Projects/BarcodeRelayControl/barcode_relay.py
+
+[Install]
+WantedBy=multi-user.target
+
