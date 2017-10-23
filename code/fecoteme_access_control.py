@@ -15,15 +15,13 @@ from barscanner import Barscanner
 def barscanner_handle(read_code, relay, direction, access_ctl):
     if access_ctl.is_valid_access(read_code, direction):
         if direction == "in":
-            print("Entering")
             access_ctl.userEnters(read_code)
+            print("Entering")
         if direction == "out":
-            print("Exiting")
             access_ctl.userExits(read_code)
+            print("Exiting")
 
         relay.send_pulse(50)
-    else:
-        print("Invalid access")
 
 # --------------- Main Program ---------------
 
@@ -38,10 +36,19 @@ def main():
     relay = Relay(RELAY_PIN)
 
     # Setup databases
-    accessDB = Database("localhost", "root", "", "fecoteme")
+    credentials = []
+    with open("dbcredentials.txt") as f:
+        for line in f:
+            print(line)
+            credentials.append(line.split())
+
+    print(credentials[0])
+    print(credentials[1])
+    # accessDB = Database("localhost", "root", "", "fecoteme")
+    accessDB = Database(*credentials[0])
     accessDB.connect()
-    movementsDB = Database("localhost", "root", "", "fecoteme")
-    # Database("juanma.us", "fecoteme","txfP9vLHjvRtAzNQ", "fecotemeGYM", 3306)
+    # movementsDB = Database("localhost", "root", "", "fecoteme")
+    movementsDB = Database(*credentials[1])
     movementsDB.connect()
 
     # Setup access control system
@@ -78,9 +85,9 @@ def main():
         asyncio.ensure_future(handle_exception(barscanner.read_code_coroutine))
 
     # Setup server
-    bound_protocol = functools.partial(RelayServerProtocol, relay)
-    server_coroutine = loop.create_server(bound_protocol, RPI_IP, RPI_PORT)
-    asyncio.ensure_future(server_coroutine)
+    # bound_protocol = functools.partial(RelayServerProtocol, relay)
+    # server_coroutine = loop.create_server(bound_protocol, RPI_IP, RPI_PORT)
+    # asyncio.ensure_future(server_coroutine)
 
     # Run main event loop
     try:

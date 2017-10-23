@@ -60,47 +60,38 @@ class AccessControl:
     def is_valid_access(self, affiliate_id, direc):
         is_valid = False
 
-        sql = "select firstName,lastName,subscriptionDate \
-        from afiliado where (id='%d')" % (int(affiliate_id))
-        cursor = self.accessDB.query(sql)
-
-        data = cursor.fetchone()
-
+        # sql = "select firstName,lastName,subscriptionDate \
+        # from afiliado where (id='%d')" % (int(affiliate_id))
         userInside = self.isUserInside(affiliate_id)
 
         if ((not userInside and direc == "in") or (userInside and direc == "out")):
+            sql = "(SELECT valido_hasta FROM pagos where carne='%d'\
+            order by id DESC LIMIT 1)" % (int(affiliate_id))
+
+            cursor = self.accessDB.query(sql)
+            data = cursor.fetchone()
+
             print(60 * "-")
             print("Affiliate ID:", affiliate_id)
 
             if data is not None:
-                name = " ".join(data[0:2])
-                subscription_date = data[2]
+                valid_time = data[0]
+                now_time = datetime.now()
 
-                print("Name:", name)
+                print("valid time:", valid_time)
+                print("now time:", now_time)
 
-                if subscription_date is not None:
-                    last_valid_access_date = subscription_date
-                    + relativedelta(days=+30)
+                is_valid = now_time <= valid_time
 
-                    today = date.today()
-                    is_valid = (today <= last_valid_access_date)
-
-                    print("Subscription Date:", subscription_date)
-                    print("Last Valid Access Date:", last_valid_access_date)
-                    print("Days from Last Subscription Update:",
-                          (today-subscription_date).days)
-
-                    if is_valid is False:
-                        print("")
-                        print("Invalid access: Affiliate subscription has caducated.")
-                        print("Less or equal than 30 days from last subscription update")
-                        print("is required for access")
+                if is_valid:
+                    print("Valid access")
                 else:
-                    print("")
-                    print("Invalid access: Affiliate has never been subscribed")
+                    print("Invalid access: Affiliate subscription has caducated.")
+                    print("Less or equal than 30 days from last subscription update")
+                    print("is required for access")
             else:
                 print("")
-                print("Invalid access: Affiliate does not exist")
+                print("Invalid access: Affiliate has no registered valid datetime")
 
             print(60 * "-")
         else:
