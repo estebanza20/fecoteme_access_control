@@ -13,7 +13,8 @@ class Database:
         self.conn = None
 
     def connect(self):
-        if self.port == None:
+
+        if self.port is None:
             self.conn = MySQLdb.connect(host=self.server,
                                         user=self.user,
                                         passwd=self.passwd,
@@ -38,8 +39,7 @@ class Database:
             self.conn.commit()
         return cursor
 
-    
-#FIXME: Implement movQueue pipe with multiprocessing
+
 class AccessControl:
     def __init__(self, accessDB, movementsDB):
         self.accessDB = accessDB
@@ -49,11 +49,11 @@ class AccessControl:
     def isUserInside(self, affiliate_id):
         return affiliate_id in self.usersInside
 
-    #FIXME: Register user entry in movementsDB
+    # FIXME: Register user entry in movementsDB
     def userEnters(self, affiliate_id):
         self.usersInside.add(affiliate_id)
 
-    #FIXME: Register user exit in movementsDB
+    # FIXME: Register user exit in movementsDB
     def userExits(self, affiliate_id):
         self.usersInside.discard(affiliate_id)
 
@@ -63,11 +63,11 @@ class AccessControl:
         sql = "select firstName,lastName,subscriptionDate \
         from afiliado where (id='%d')" % (int(affiliate_id))
         cursor = self.accessDB.query(sql)
-        
+
         data = cursor.fetchone()
-        
-        userInside = self.isUserInside(affiliate_id);
-        
+
+        userInside = self.isUserInside(affiliate_id)
+
         if ((not userInside and direc == "in") or (userInside and direc == "out")):
             print(60 * "-")
             print("Affiliate ID:", affiliate_id)
@@ -77,17 +77,20 @@ class AccessControl:
                 subscription_date = data[2]
 
                 print("Name:", name)
-        
+
                 if subscription_date is not None:
-                    last_valid_access_date = subscription_date + relativedelta(days=+30)
+                    last_valid_access_date = subscription_date
+                    + relativedelta(days=+30)
+
                     today = date.today()
                     is_valid = (today <= last_valid_access_date)
 
-                    print("Subscription Date:",subscription_date)
-                    print("Last Valid Access Date:",last_valid_access_date)
-                    print("Days from Last Subscription Update:",(today-subscription_date).days)
+                    print("Subscription Date:", subscription_date)
+                    print("Last Valid Access Date:", last_valid_access_date)
+                    print("Days from Last Subscription Update:",
+                          (today-subscription_date).days)
 
-                    if is_valid == False:
+                    if is_valid is False:
                         print("")
                         print("Invalid access: Affiliate subscription has caducated.")
                         print("Less or equal than 30 days from last subscription update")
@@ -102,5 +105,5 @@ class AccessControl:
             print(60 * "-")
         else:
             print("User in invalid position")
-            
+
         return is_valid

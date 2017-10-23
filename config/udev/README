@@ -1,0 +1,8 @@
+---------------------------------------------------------------------
+         udev rules for Bar Code Scanners configuration
+---------------------------------------------------------------------
+
+- Parameters found with: # udevadm info -a -n /dev/input/event0
+
+- Install in /etc/udev/rules.d/
+
