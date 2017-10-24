@@ -12,7 +12,7 @@ from tcp_server import RelayServerProtocol
 from barscanner import Barscanner
 
 
-def barscanner_handle(read_code, relay, direction, access_ctl):
+def barscanner_handle(read_code, direction, relay, access_ctl):
     if access_ctl.is_valid_access(read_code, direction):
         if direction == "in":
             access_ctl.userEnters(read_code)
@@ -39,15 +39,10 @@ def main():
     credentials = []
     with open("dbcredentials.txt") as f:
         for line in f:
-            print(line)
             credentials.append(line.split())
 
-    print(credentials[0])
-    print(credentials[1])
-    # accessDB = Database("localhost", "root", "", "fecoteme")
     accessDB = Database(*credentials[0])
     accessDB.connect()
-    # movementsDB = Database("localhost", "root", "", "fecoteme")
     movementsDB = Database(*credentials[1])
     movementsDB.connect()
 
@@ -56,21 +51,16 @@ def main():
 
     # Set barscanners callbacks
     barscanner0_cb = functools.partial(barscanner_handle,
-                                       relay=relay, direction="in",
+                                       relay=relay,
                                        access_ctl=accessControl)
 
     barscanner1_cb = functools.partial(barscanner_handle,
-                                       relay=relay, direction="out",
+                                       relay=relay,
                                        access_ctl=accessControl)
     # Setup barscanners
-    barscanner0 = Barscanner('/dev/barscanner0', barscanner0_cb)
-    barscanner1 = Barscanner('/dev/barscanner1', barscanner1_cb)
+    barscanner0 = Barscanner('/dev/barscanner0', "in", barscanner0_cb)
+    barscanner1 = Barscanner('/dev/barscanner1', "out", barscanner1_cb)
 
-    # Get exclusive access to barscanners
-    barscanner0.grab()
-    barscanner1.grab()
-
-    # Setup main event loop
     loop = asyncio.get_event_loop()
 
     async def handle_exception(coroutine):
@@ -92,9 +82,8 @@ def main():
     # Run main event loop
     try:
         loop.run_forever()
-    except KeyboardInterrupt:
+    except:
         loop.close()
-
 
 if __name__ == "__main__":
     main()

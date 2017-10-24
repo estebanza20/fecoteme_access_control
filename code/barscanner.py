@@ -5,10 +5,11 @@ import evdev
 
 
 class Barscanner:
-    def __init__(self, device_name, code_ready_handle=None):
+    def __init__(self, device_name, direction, code_ready_handle=None):
         self.device = evdev.InputDevice(device_name)
         self.read_code = ""
         self.code_ready_handle = code_ready_handle
+        self.direction = direction
 
     # Scancode: ASCIICode
     SCANCODES = {0: None, 1: u'ESC', 2: u'1', 3: u'2', 4: u'3', 5: u'4', 6: u'5', 7: u'6', 8: u'7', 9: u'8', 10: u'9',
@@ -26,6 +27,10 @@ class Barscanner:
     def grab(self):
         self.device.grab()
 
+    # Release exclusive access to serial device
+    def ungrab(self):
+       self.device.ungrab() 
+
     # Barscanner async read code coroutine
     async def read_code_coroutine(self):
         async for event in self.device.async_read_loop():
@@ -37,5 +42,5 @@ class Barscanner:
                     if data.scancode != 28:  # Building code
                         self.read_code += key_lookup
                     else:  # Code ready
-                        self.code_ready_handle(self.read_code)
+                        self.code_ready_handle(self.read_code, self.direction)
                         self.read_code = ''

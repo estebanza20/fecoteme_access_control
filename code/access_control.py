@@ -52,6 +52,8 @@ class AccessControl:
     # FIXME: Register user entry in movementsDB
     def userEnters(self, affiliate_id):
         self.usersInside.add(affiliate_id)
+        # sql = "insert into movimientos"
+        # self.movementsDB.query(sql)
 
     # FIXME: Register user exit in movementsDB
     def userExits(self, affiliate_id):
@@ -75,13 +77,13 @@ class AccessControl:
             print("Affiliate ID:", affiliate_id)
 
             if data is not None:
-                valid_time = data[0]
+                max_valid_time = data[0]
                 now_time = datetime.now()
 
-                print("valid time:", valid_time)
+                print("valid time:", max_valid_time)
                 print("now time:", now_time)
 
-                is_valid = now_time <= valid_time
+                is_valid = now_time <= max_valid_time
 
                 if is_valid:
                     print("Valid access")
