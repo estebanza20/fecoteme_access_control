@@ -37,7 +37,7 @@ def main():
 
     # Setup databases
     credentials = []
-    with open("dbcredentials.txt") as f:
+    with open("/home/pi/fecoteme_access_control/dbcredentials.txt") as f:
         for line in f:
             credentials.append(line.split())
 
