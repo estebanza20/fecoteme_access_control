@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# FIXME: Handle no device exception
 import asyncio
 import functools
 
@@ -29,8 +28,6 @@ def barscanner_handle(read_code, direction, relay, access_ctl):
 def main():
     # Constants definition
     RELAY_PIN = 37           # Relay GPIO Board Pin
-    RPI_IP = '192.168.2.49'  # Raspberry PI IP Address
-    RPI_PORT = '8888'        # Barcode_relay server port
 
     # Setup relay
     relay = Relay(RELAY_PIN)
@@ -73,11 +70,6 @@ def main():
     # Setup barscanners async handle tasks
     for barscanner in barscanner0, barscanner1:
         asyncio.ensure_future(handle_exception(barscanner.read_code_coroutine))
-
-    # Setup server
-    # bound_protocol = functools.partial(RelayServerProtocol, relay)
-    # server_coroutine = loop.create_server(bound_protocol, RPI_IP, RPI_PORT)
-    # asyncio.ensure_future(server_coroutine)
 
     # Run main event loop
     try:
