@@ -13,6 +13,8 @@ from barscanner import Barscanner
 
 def barscanner_handle(read_code, direction, relay, access_ctl):
     if access_ctl.is_valid_access(read_code, direction):
+        relay.send_pulse(50)
+
         if direction == "in":
             access_ctl.userEnters(read_code)
             print("Entering")
@@ -20,7 +22,6 @@ def barscanner_handle(read_code, direction, relay, access_ctl):
             access_ctl.userExits(read_code)
             print("Exiting")
 
-        relay.send_pulse(50)
 
 # --------------- Main Program ---------------
 

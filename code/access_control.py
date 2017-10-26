@@ -49,21 +49,25 @@ class AccessControl:
     def isUserInside(self, affiliate_id):
         return affiliate_id in self.usersInside
 
-    # FIXME: Register user entry in movementsDB
     def userEnters(self, affiliate_id):
         self.usersInside.add(affiliate_id)
-        # sql = "insert into movimientos"
-        # self.movementsDB.query(sql)
 
-    # FIXME: Register user exit in movementsDB
+        sql = "insert into movimientos (carne,tipo)\
+        values ('%d', '0')" %(int(affiliate_id))
+
+        self.movementsDB.query(sql)
+
     def userExits(self, affiliate_id):
         self.usersInside.discard(affiliate_id)
+
+        sql = "insert into movimientos (carne,tipo)\
+        values ('%d', '1')" %(int(affiliate_id))
+
+        self.movementsDB.query(sql)
 
     def is_valid_access(self, affiliate_id, direc):
         is_valid = False
 
-        # sql = "select firstName,lastName,subscriptionDate \
-        # from afiliado where (id='%d')" % (int(affiliate_id))
         userInside = self.isUserInside(affiliate_id)
 
         if ((not userInside and direc == "in") or (userInside and direc == "out")):
