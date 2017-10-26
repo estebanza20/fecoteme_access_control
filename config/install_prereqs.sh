@@ -19,3 +19,5 @@ sudo apt-get install python3-mysqldb
 # Install dateutil
 sudo apt-get intall python3-dateutil
 
+# Install posix-ipc
+sudo pip3 install posix_ipc
