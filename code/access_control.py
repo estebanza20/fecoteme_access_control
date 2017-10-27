@@ -13,7 +13,6 @@ class Database:
         self.conn = None
 
     def connect(self):
-
         if self.port is None:
             self.conn = MySQLdb.connect(host=self.server,
                                         user=self.user,
@@ -28,11 +27,12 @@ class Database:
 
     def query(self, sql):
         try:
+            # self.conn.ping(True)
             cursor = self.conn.cursor()
             cursor.execute(sql)
             self.conn.commit()
         except (AttributeError, MySQLdb.OperationalError):
-            self.conn.rollback()
+            # self.conn.rollback()
             self.connect()
             cursor = self.conn.cursor()
             cursor.execute(sql)
@@ -41,9 +41,9 @@ class Database:
 
 
 class AccessControl:
-    def __init__(self, accessDB, movementsDB):
+    def __init__(self, accessDB, movWriteQueue):
         self.accessDB = accessDB
-        self.movementsDB = movementsDB
+        self.movWriteQueue = movWriteQueue
         self.usersInside = set()
 
     def isUserInside(self, affiliate_id):
@@ -51,21 +51,15 @@ class AccessControl:
 
     def userEnters(self, affiliate_id):
         self.usersInside.add(affiliate_id)
-
-        sql = "insert into movimientos (carne,tipo)\
-        values ('%d', '0')" %(int(affiliate_id))
-
-        self.movementsDB.query(sql)
+        movData = (affiliate_id, 0, datetime.now())
+        self.movWriteQueue.put(movData)
 
     def userExits(self, affiliate_id):
         self.usersInside.discard(affiliate_id)
+        movData = (affiliate_id, 1, datetime.now())
+        self.movWriteQueue.put(movData)
 
-        sql = "insert into movimientos (carne,tipo)\
-        values ('%d', '1')" %(int(affiliate_id))
-
-        self.movementsDB.query(sql)
-
-    def is_valid_access(self, affiliate_id, direc):
+    def isValidAccess(self, affiliate_id, direc):
         is_valid = False
 
         userInside = self.isUserInside(affiliate_id)
