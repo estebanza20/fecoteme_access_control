@@ -22,12 +22,19 @@ def main():
     AND b.valido_hasta = (SELECT MAX(valido_hasta) \
     from pagos WHERE carne=a.id AND anulado=0) \
     LEFT JOIN tipo_afiliado c ON a.tipo = c.tipo"
+
     cursor = serverDB.query(sql)
+
+    sql = "INSERT INTO access (id, max_valid_time, quickpass)\
+    VALUES ('%d', '%s', '%d')\
+    ON DUPLICATE KEY UPDATE \
+    id=VALUES(id),\
+    max_valid_time=VALUES(max_valid_time),\
+    quickpass=VALUES(quickpass)"
 
     # Update local database
     for row in cursor:
-        sql = "REPLACE INTO access values ('%d', '%s', '%d')" % row
-        localDB.query(sql)
+        localDB.query(sql % row)
 
 if __name__ == '__main__':
     main()

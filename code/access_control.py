@@ -81,17 +81,17 @@ class AccessControl:
                     print("Affiliate has quick-pass access")
                 else:
                     max_valid_time = data[1]
-                    now_time = datetime.now()
+                    if max_valid_time is not None:
+                        now_time = datetime.now()
 
-                    print("valid time:", max_valid_time)
-                    print("now time:", now_time)
+                        print("valid time:", max_valid_time)
+                        print("now time:", now_time)
 
-                    is_valid = now_time <= max_valid_time
-
-                    if not is_valid:
-                        print("Invalid access: Affiliate subscription has caducated.")
-                        print("Less or equal than 30 days from last subscription update")
-                        print("is required for access")
+                        is_valid = now_time <= max_valid_time 
+                        if not is_valid:
+                            print("Invalid access: Affiliate subscription has caducated.")
+                            print("Less or equal than 30 days from last subscription update")
+                            print("is required for access")
 
                 if is_valid:
                     print("Valid access")
