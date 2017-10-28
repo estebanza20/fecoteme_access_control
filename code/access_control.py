@@ -1,6 +1,5 @@
 import MySQLdb
-from datetime import datetime, date
-from dateutil.relativedelta import relativedelta
+from datetime import datetime
 
 
 class Database:
@@ -65,8 +64,8 @@ class AccessControl:
         userInside = self.isUserInside(affiliate_id)
 
         if ((not userInside and direc == "in") or (userInside and direc == "out")):
-            sql = "(SELECT valido_hasta FROM pagos where carne='%d'\
-            order by id DESC LIMIT 1)" % (int(affiliate_id))
+            sql = "SELECT quickpass,max_valid_time FROM access \
+            where id='%d'" % (int(affiliate_id))
 
             cursor = self.accessDB.query(sql)
             data = cursor.fetchone()
@@ -75,26 +74,34 @@ class AccessControl:
             print("Affiliate ID:", affiliate_id)
 
             if data is not None:
-                max_valid_time = data[0]
-                now_time = datetime.now()
+                quickpass = data[0]
 
-                print("valid time:", max_valid_time)
-                print("now time:", now_time)
+                if quickpass == 1:
+                    is_valid = True
+                    print("Affiliate has quick-pass access")
+                else:
+                    max_valid_time = data[1]
+                    now_time = datetime.now()
 
-                is_valid = now_time <= max_valid_time
+                    print("valid time:", max_valid_time)
+                    print("now time:", now_time)
+
+                    is_valid = now_time <= max_valid_time
+
+                    if not is_valid:
+                        print("Invalid access: Affiliate subscription has caducated.")
+                        print("Less or equal than 30 days from last subscription update")
+                        print("is required for access")
 
                 if is_valid:
                     print("Valid access")
-                else:
-                    print("Invalid access: Affiliate subscription has caducated.")
-                    print("Less or equal than 30 days from last subscription update")
-                    print("is required for access")
             else:
                 print("")
-                print("Invalid access: Affiliate has no registered valid datetime")
+                print("Invalid access: Affiliate has no registered max valid ")
+                print("datetime and has no quick-pass access")
 
             print(60 * "-")
         else:
-            print("User in invalid position")
+            print("User at invalid position")
 
         return is_valid
