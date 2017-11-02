@@ -1,5 +1,4 @@
 import evdev
-import time
 
 # --------------- Barscanner class ---------------
 
@@ -31,9 +30,9 @@ class Barscanner:
     def ungrab(self):
        self.device.ungrab()
 
-    # Barscanner async read code coroutine
-    async def read_code_coroutine(self):
-        async for event in self.device.async_read_loop():
+    # Barscanner read code handler
+    def read_code_handler(self):
+        for event in self.device.read():
             if event.type == evdev.ecodes.EV_KEY:
                 data = evdev.categorize(event)
                 if data.keystate == 1:  # Down events only
