@@ -38,8 +38,9 @@ class Database:
             self.conn.commit()
         return cursor
 
-    def close_connection():
+    def close_connection(self):
         self.conn.close()
+
 
 class AccessControl:
     def __init__(self, accessDB, movWriteQueue):
@@ -65,45 +66,29 @@ class AccessControl:
 
         userInside = self.isUserInside(affiliate_id)
 
+        # Check if user is at valid position
         if ((not userInside and direc == "in") or (userInside and direc == "out")):
-            sql = "SELECT quickpass,max_valid_time FROM access \
-            where id='%d'" % (int(affiliate_id))
+            # If user is about to get in, check database for valid access
+            if direc == "in":
+                sql = "SELECT quickpass,max_valid_time FROM access \
+                where id='%d'" % (int(affiliate_id))
 
-            cursor = self.accessDB.query(sql)
-            data = cursor.fetchone()
+                cursor = self.accessDB.query(sql)
+                data = cursor.fetchone()
 
-            print(60 * "-")
-            print("Affiliate ID:", affiliate_id)
+                if data is not None:
+                    quickpass = data[0]
 
-            if data is not None:
-                quickpass = data[0]
+                    if quickpass == 1:
+                        is_valid = True
+                    else:
+                        max_valid_time = data[1]
+                        if max_valid_time is not None:
+                            now_time = datetime.now()
+                            is_valid = now_time <= max_valid_time
 
-                if quickpass == 1:
-                    is_valid = True
-                    print("Affiliate has quick-pass access")
-                else:
-                    max_valid_time = data[1]
-                    if max_valid_time is not None:
-                        now_time = datetime.now()
-
-                        print("valid time:", max_valid_time)
-                        print("now time:", now_time)
-
-                        is_valid = now_time <= max_valid_time 
-                        if not is_valid:
-                            print("Invalid access: Affiliate subscription has caducated.")
-                            print("Less or equal than 30 days from last subscription update")
-                            print("is required for access")
-
-                if is_valid:
-                    print("Valid access")
-            else:
-                print("")
-                print("Invalid access: Affiliate has no registered max valid ")
-                print("datetime and has no quick-pass access")
-
-            print(60 * "-")
-        else:
-            print("User at invalid position")
+            #If user is about to get out, allow access 
+            elif direc == "out":
+                is_valid = True
 
         return is_valid
