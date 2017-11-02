@@ -1,5 +1,5 @@
 import evdev
-# import asyncio
+import time
 
 # --------------- Barscanner class ---------------
 
@@ -29,7 +29,7 @@ class Barscanner:
 
     # Release exclusive access to serial device
     def ungrab(self):
-       self.device.ungrab() 
+       self.device.ungrab()
 
     # Barscanner async read code coroutine
     async def read_code_coroutine(self):

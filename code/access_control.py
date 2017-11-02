@@ -38,6 +38,8 @@ class Database:
             self.conn.commit()
         return cursor
 
+    def close_connection():
+        self.conn.close()
 
 class AccessControl:
     def __init__(self, accessDB, movWriteQueue):

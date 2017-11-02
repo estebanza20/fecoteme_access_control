@@ -36,5 +36,9 @@ def main():
     for row in cursor:
         localDB.query(sql % row)
 
+    # Close database connections
+    localDB.close_connection()
+    serverDB.close_connection()
+
 if __name__ == '__main__':
     main()
