@@ -17,11 +17,26 @@ def main():
     serverDB.connect()
 
     # Check affiliates max_valid_date and quick-pass fields
-    sql = "SELECT a.id,b.valido_hasta,c.entra_gratis FROM afiliado a \
-    LEFT JOIN pagos b ON a.id = b.carne  \
-    AND b.valido_hasta = (SELECT MAX(valido_hasta) \
-    from pagos WHERE carne=a.id AND anulado=0) \
-    LEFT JOIN tipo_afiliado c ON a.tipo = c.tipo"
+    sql = "SELECT a.id, \
+	IFNULL((SELECT	\
+		IF (\
+			y.entra_gratis=1 or c.entra_gratis=1,\
+			'2050-01-01 00:00:00',			\
+			MAX(x.valido_hasta)\
+			) valido_hasta\
+		FROM afiliado z\
+		left join pagos x on z.id = x.carne and anulado = 0\
+		left join tipo_afiliado y on z.tipo = y.tipo\
+		where z.id = d.jugador\
+		),\
+		IF (c.entra_gratis=1,'2050-01-01 00:00:00',IFNULL(MAX(b.valido_hasta),'2000-01-01 00:00:00'))) validez,\
+        0 entra_gratis\
+	FROM afiliado a   \
+    left join pagos b on a.id = b.carne and anulado = 0\
+    left join tipo_afiliado c on a.tipo = c.tipo\
+    left join relacion_familiar d on encargado = a.id and d.relacion_activa = 1\
+	where b.valido_hasta is not null OR c.entra_gratis = 1 OR d.jugador is not null\
+group by a.id"
 
     cursor = serverDB.query(sql)
 
