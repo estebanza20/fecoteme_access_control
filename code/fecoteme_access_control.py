@@ -32,9 +32,9 @@ def mov_write_db_handle(movdbCredentials, movWriteQueue):
             sql = "insert into movimientos (carne,tipo,fecha) values\
             ('%s', '%d', '%s')" % (affiliate_id, mov_type, timestamp)
 
-            print("Before movementsDB query")
+            # print("Before movementsDB query")
             movementsDB.query(sql)
-            print("After movementsDB query")
+            # print("After movementsDB query")
 
             movWriteQueue.task_done()
 
